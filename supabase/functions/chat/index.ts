@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     // Initialize OpenAI client
     const openai = new OpenAI({
-      apiKey: "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",
+      apiKey: Deno.env.get("OPENAI_API_KEY"),
     });
 
     // Prepare messages array with conversation history
