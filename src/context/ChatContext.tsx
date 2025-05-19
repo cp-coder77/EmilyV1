@@ -80,7 +80,38 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isReflectiveMode, setIsReflectiveMode] = useState(false);
   const knowledgeBase = useKnowledgeBase();
 
+  const addBotMessage = (content: string) => {
+    const botMessage: MessageType = {
+      id: Date.now().toString(),
+      content,
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, botMessage]);
+  };
+
+  const handleError = (error: unknown) => {
+    console.error('Chat error:', error);
+    
+    let errorMessage = "I seem to be having a moment. Could we try that again? 💫";
+    
+    if (error instanceof Error) {
+      // Check for specific error types and provide friendly messages
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = "Looks like we're having trouble connecting. Could you check your internet and try again? 🌐";
+      } else if (error.message.includes('401')) {
+        errorMessage = "I'm having trouble accessing my knowledge. The team has been notified! Let's try again in a bit? 🔄";
+      } else if (error.message.includes('429')) {
+        errorMessage = "Whew, I need a quick breather! Could we pause for a moment? 😅";
+      }
+    }
+    
+    addBotMessage(errorMessage);
+  };
+
   const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return;
+
     const userTone = analyzeTone(content);
     const userMessage: MessageType = {
       id: Date.now().toString(),
@@ -98,23 +129,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const templateMatch = matchTemplate(content);
       if (templateMatch) {
         setTimeout(() => {
-          const botResponse: MessageType = {
-            id: (Date.now() + 1).toString(),
-            content: templateMatch,
-            sender: 'bot',
-            timestamp: new Date(),
-          };
-          setMessages(prev => [...prev, botResponse]);
+          addBotMessage(templateMatch);
           setIsTyping(false);
         }, 1000);
         return;
       }
 
-      console.log("Sending message to OpenAI:", content);
-      console.log("Current conversation history:", messages.slice(-6));
-
       // If no template match, send to Supabase Edge Function
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+      
+      // Validate required environment variables
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        throw new Error('Missing required environment variables');
+      }
+
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -128,29 +156,25 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData
+        });
+        throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Received response from OpenAI:", data);
       
-      const botResponse: MessageType = {
-        id: (Date.now() + 1).toString(),
-        content: data.reply,
-        sender: 'bot',
-        timestamp: new Date(),
-      };
+      if (!data || !data.reply) {
+        throw new Error('Invalid response format');
+      }
 
-      setMessages(prev => [...prev, botResponse]);
+      addBotMessage(data.reply);
+
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorResponse: MessageType = {
-        id: (Date.now() + 1).toString(),
-        content: "I seem to be having trouble processing that right now. Could we try again? 🌟",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorResponse]);
+      handleError(error);
     } finally {
       setIsTyping(false);
     }
