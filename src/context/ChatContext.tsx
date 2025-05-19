@@ -67,6 +67,10 @@ const matchTemplate = (message: string): string | null => {
   return null;
 };
 
+// Rate limiting on client side
+const COOLDOWN_PERIOD = 3000; // 3 seconds between messages
+let lastMessageTime = 0;
+
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<MessageType[]>([
     {
@@ -96,13 +100,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let errorMessage = "I seem to be having a moment. Could we try that again? 💫";
     
     if (error instanceof Error) {
-      // Check for specific error types and provide friendly messages
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      if (error.message.includes('429') || error.message.includes('rate limit')) {
+        errorMessage = "I need a quick breather! Could you try again in a minute? 😅 This helps me stay within my conversation limits.";
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         errorMessage = "Looks like we're having trouble connecting. Could you check your internet and try again? 🌐";
       } else if (error.message.includes('401')) {
         errorMessage = "I'm having trouble accessing my knowledge. The team has been notified! Let's try again in a bit? 🔄";
-      } else if (error.message.includes('429')) {
-        errorMessage = "Whew, I need a quick breather! Could we pause for a moment? 😅";
       }
     }
     
@@ -111,6 +114,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
+
+    // Check cooldown period
+    const now = Date.now();
+    if (now - lastMessageTime < COOLDOWN_PERIOD) {
+      addBotMessage("Let's take a brief pause between messages. It helps me process our conversation better! 😊");
+      return;
+    }
+    lastMessageTime = now;
 
     const userTone = analyzeTone(content);
     const userMessage: MessageType = {
@@ -155,17 +166,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: errorData
-        });
-        throw new Error(`API error: ${response.status}`);
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `API error: ${response.status}`);
+      }
       
       if (!data || !data.reply) {
         throw new Error('Invalid response format');

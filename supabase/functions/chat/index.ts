@@ -17,6 +17,24 @@ Your responses should:
 
 Remember previous exchanges and reference them when relevant to create a more natural, flowing conversation.`;
 
+// Simple in-memory rate limiting
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 20; // Maximum requests per minute
+const requestTimestamps: number[] = [];
+
+function isRateLimited(): boolean {
+  const now = Date.now();
+  // Remove timestamps older than the window
+  while (requestTimestamps.length > 0 && requestTimestamps[0] < now - RATE_LIMIT_WINDOW) {
+    requestTimestamps.shift();
+  }
+  return requestTimestamps.length >= MAX_REQUESTS_PER_WINDOW;
+}
+
+function addRequest(): void {
+  requestTimestamps.push(Date.now());
+}
+
 Deno.serve(async (req) => {
   try {
     // Handle CORS preflight requests
@@ -36,6 +54,21 @@ Deno.serve(async (req) => {
         headers: {
           ...corsHeaders,
           "Content-Type": "application/json",
+        },
+      });
+    }
+
+    // Check rate limit
+    if (isRateLimited()) {
+      return new Response(JSON.stringify({
+        error: "I need a quick breather! Could you try again in a minute? 😅 This helps me stay within my conversation limits.",
+        isRateLimit: true
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Retry-After": "60"
         },
       });
     }
@@ -75,6 +108,9 @@ Deno.serve(async (req) => {
 
     console.log("🚀 Sending request to OpenAI with messages:", JSON.stringify(messages, null, 2));
 
+    // Add request to rate limiting tracker
+    addRequest();
+
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -97,6 +133,21 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("❌ Error processing chat message:", error);
     console.error("Full error details:", JSON.stringify(error, null, 2));
+
+    // Check if it's a rate limit error from OpenAI
+    if (error.message?.includes('429') || error.message?.includes('exceeded your current quota')) {
+      return new Response(JSON.stringify({
+        error: "I need a quick breather! Could you try again in a minute? 😅 This helps me stay within my conversation limits.",
+        isRateLimit: true
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Retry-After": "60"
+        },
+      });
+    }
 
     return new Response(JSON.stringify({
       error: "I seem to be having trouble processing that right now. Could we try again? 🌟",
