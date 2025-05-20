@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useKnowledgeBase } from '../services/knowledgeBase';
+import { createClient } from '@supabase/supabase-js';
 import Sentiment from 'sentiment';
 import stringSimilarity from 'string-similarity';
+
+// Initialize Supabase client
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export type MessageType = {
   id: string;
@@ -71,6 +78,21 @@ const matchTemplate = (message: string): string | null => {
 const COOLDOWN_PERIOD = 3000; // 3 seconds between messages
 let lastMessageTime = 0;
 
+const saveMessageToDatabase = async (content: string, isBot: boolean) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { error } = await supabase
+    .from('chat_messages')
+    .insert({
+      content,
+      user_id: user.id,
+      is_bot: isBot
+    });
+
+  if (error) throw error;
+};
+
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<MessageType[]>([
     {
@@ -84,17 +106,30 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isReflectiveMode, setIsReflectiveMode] = useState(false);
   const knowledgeBase = useKnowledgeBase();
 
-  const addBotMessage = (content: string) => {
-    const botMessage: MessageType = {
-      id: Date.now().toString(),
-      content,
-      sender: 'bot',
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, botMessage]);
+  const addBotMessage = async (content: string) => {
+    try {
+      await saveMessageToDatabase(content, true);
+      const botMessage: MessageType = {
+        id: Date.now().toString(),
+        content,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error saving bot message:', error);
+      // Still show the message in UI even if database save fails
+      const botMessage: MessageType = {
+        id: Date.now().toString(),
+        content,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
   };
 
-  const handleError = (error: unknown) => {
+  const handleError = async (error: unknown) => {
     console.error('Chat error:', error);
     
     let errorMessage = "I seem to be having a moment. Could we try that again? 💫";
@@ -106,10 +141,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         errorMessage = "Looks like we're having trouble connecting. Could you check your internet and try again? 🌐";
       } else if (error.message.includes('timeout')) {
         errorMessage = "I'm taking a bit longer than usual to think. Let's try that again? ⏳";
+      } else if (error.message.includes('User not authenticated')) {
+        errorMessage = "Looks like you're not signed in. Please sign in to continue our chat! 🔐";
+      } else if (error.message.includes('500')) {
+        errorMessage = "I encountered an unexpected issue. My team has been notified and is working on it. Please try again in a moment! 🔧";
       }
     }
     
-    addBotMessage(errorMessage);
+    await addBotMessage(errorMessage);
   };
 
   const sendMessage = useCallback(async (content: string) => {
@@ -118,7 +157,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check cooldown period
     const now = Date.now();
     if (now - lastMessageTime < COOLDOWN_PERIOD) {
-      addBotMessage("Let's take a brief pause between messages. It helps me process our conversation better! 😊");
+      await addBotMessage("Let's take a brief pause between messages. It helps me process our conversation better! 😊");
       return;
     }
     lastMessageTime = now;
@@ -132,33 +171,51 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tone: userTone
     };
     
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
-
     try {
+      // Save user message to database first
+      await saveMessageToDatabase(content, false);
+      setMessages(prev => [...prev, userMessage]);
+      setIsTyping(true);
+
       // Check for template matches first
       const templateMatch = matchTemplate(content);
       if (templateMatch) {
-        setTimeout(() => {
-          addBotMessage(templateMatch);
+        setTimeout(async () => {
+          await addBotMessage(templateMatch);
           setIsTyping(false);
         }, 1000);
         return;
       }
 
-      // Simplified request to match the working curl command
-      const response = await fetch(`${import.meta.env.VITE_FLOWISE_API_HOST}/api/v1/prediction/${import.meta.env.VITE_FLOWISE_CHATFLOW_ID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: content
-        }),
-      });
+      // Make API call with error handling and retries
+      let retries = 3;
+      let response;
+      
+      while (retries > 0) {
+        try {
+          response = await fetch(`${import.meta.env.VITE_FLOWISE_API_HOST}/api/v1/prediction/${import.meta.env.VITE_FLOWISE_CHATFLOW_ID}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              question: content
+            }),
+          });
+          
+          if (response.ok) break;
+          
+          retries--;
+          if (retries > 0) await new Promise(r => setTimeout(r, 1000 * (4 - retries)));
+        } catch (error) {
+          retries--;
+          if (retries === 0) throw error;
+          await new Promise(r => setTimeout(r, 1000 * (4 - retries)));
+        }
+      }
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      if (!response || !response.ok) {
+        throw new Error(`API error: ${response?.status || 'Unknown'}`);
       }
 
       const data = await response.json();
@@ -167,14 +224,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Invalid response format');
       }
 
-      addBotMessage(data.text);
+      await addBotMessage(data.text);
 
     } catch (error) {
-      handleError(error);
+      await handleError(error);
     } finally {
       setIsTyping(false);
     }
-  }, [messages]);
+  }, []);
 
   const toggleReflectiveMode = useCallback(() => {
     setIsReflectiveMode(prev => !prev);
