@@ -146,29 +146,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Prepare the conversation history
-      const history = messages.slice(-6).map(msg => ({
-        message: msg.content,
-        type: msg.sender === 'user' ? 'user' : 'assistant'
-      }));
-
-      // Call Flowise API
+      // Simplified request to match the working curl command
       const response = await fetch(`${import.meta.env.VITE_FLOWISE_API_HOST}/api/v1/prediction/${import.meta.env.VITE_FLOWISE_CHATFLOW_ID}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: content,
-          history: history,
-          overrideConfig: {
-            chatbotConfig: {
-              welcomeMessage: "Hey, I'm Emily 🦋 — your emotionally intelligent AI buddy. Ask me anything!",
-              theme: "dark",
-              fontFamily: "Poppins",
-              chatBubble: true
-            }
-          }
+          question: content
         }),
       });
 
