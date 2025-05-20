@@ -67,8 +67,8 @@ const matchTemplate = (message: string): string | null => {
   return null;
 };
 
-// Rate limiting on client side
-const COOLDOWN_PERIOD = 3000; // 3 seconds between messages
+// Rate limiting on client side - adjusted to match server-side window
+const COOLDOWN_PERIOD = 60000; // 60 seconds between messages to match server window
 let lastMessageTime = 0;
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
