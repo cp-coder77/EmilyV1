@@ -17,9 +17,9 @@ Your responses should:
 
 Remember previous exchanges and reference them when relevant to create a more natural, flowing conversation.`;
 
-// Simple in-memory rate limiting - adjusted for better performance
+// Simple in-memory rate limiting
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 10; // Reduced to 10 requests per minute for better stability
+const MAX_REQUESTS_PER_WINDOW = 20; // Maximum requests per minute
 const requestTimestamps: number[] = [];
 
 function isRateLimited(): boolean {
