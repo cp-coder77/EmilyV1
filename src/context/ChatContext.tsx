@@ -75,7 +75,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [messages, setMessages] = useState<MessageType[]>([
     {
       id: '1',
-      content: "Hello! I'm Emily, your thoughtful AI companion. I'm here to explore ideas, solve problems, or just chat about what interests you. What would you like to discuss today? 💫",
+      content: "Hey, I'm Emily 🦋 — your emotionally intelligent AI buddy. Ask me anything!",
       sender: 'bot',
       timestamp: new Date(),
     },
@@ -101,11 +101,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (error instanceof Error) {
       if (error.message.includes('429') || error.message.includes('rate limit')) {
-        errorMessage = "I need a quick breather! Could you try again in a minute? 😅 This helps me stay within my conversation limits.";
+        errorMessage = "I need a quick breather! Could you try again in a minute? 😅";
       } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         errorMessage = "Looks like we're having trouble connecting. Could you check your internet and try again? 🌐";
-      } else if (error.message.includes('401')) {
-        errorMessage = "I'm having trouble accessing my knowledge. The team has been notified! Let's try again in a bit? 🔄";
+      } else if (error.message.includes('timeout')) {
+        errorMessage = "I'm taking a bit longer than usual to think. Let's try that again? ⏳";
       }
     }
     
@@ -146,37 +146,43 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // If no template match, send to Supabase Edge Function
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-      
-      // Validate required environment variables
-      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        throw new Error('Missing required environment variables');
-      }
+      // Prepare the conversation history
+      const history = messages.slice(-6).map(msg => ({
+        message: msg.content,
+        type: msg.sender === 'user' ? 'user' : 'assistant'
+      }));
 
-      const response = await fetch(functionUrl, {
+      // Call Flowise API
+      const response = await fetch(`${import.meta.env.VITE_FLOWISE_API_HOST}/api/v1/prediction/${import.meta.env.VITE_FLOWISE_CHATFLOW_ID}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ 
-          message: content,
-          conversationHistory: messages.slice(-6) // Send last 6 messages for context
+        body: JSON.stringify({
+          question: content,
+          history: history,
+          overrideConfig: {
+            chatbotConfig: {
+              welcomeMessage: "Hey, I'm Emily 🦋 — your emotionally intelligent AI buddy. Ask me anything!",
+              theme: "dark",
+              fontFamily: "Poppins",
+              chatBubble: true
+            }
+          }
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || `API error: ${response.status}`);
+        throw new Error(`API error: ${response.status}`);
       }
+
+      const data = await response.json();
       
-      if (!data || !data.reply) {
+      if (!data || !data.text) {
         throw new Error('Invalid response format');
       }
 
-      addBotMessage(data.reply);
+      addBotMessage(data.text);
 
     } catch (error) {
       handleError(error);
@@ -197,7 +203,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMessages([
       {
         id: '1',
-        content: "Hello! I'm Emily, your thoughtful AI companion. I'm here to explore ideas, solve problems, or just chat about what interests you. What would you like to discuss today? 💫",
+        content: "Hey, I'm Emily 🦋 — your emotionally intelligent AI buddy. Ask me anything!",
         sender: 'bot',
         timestamp: new Date(),
       },
