@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { useKnowledgeBase } from '../services/knowledgeBase';
-import Sentiment from 'sentiment';
-import stringSimilarity from 'string-similarity';
+import { sendToGemini } from '../services/chatEngine';
 
 export type MessageType = {
   id: string;
@@ -17,54 +15,35 @@ type ChatContextType = {
   isTyping: boolean;
   isReflectiveMode: boolean;
   toggleReflectiveMode: () => void;
-  sendMessage: (content: string) => void;
+  sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
   handleFollowUpPrompt: (prompt: string) => void;
 };
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-const sentiment = new Sentiment();
 
-const starterTemplates = {
-  greetings: [
-    { q: "hi", a: "Hello! I'm delighted to chat with you. What's on your mind today? 💭" },
-    { q: "hello", a: "Hi there! I'm Emily, your thoughtful companion. Shall we explore something interesting together? ✨" },
-    { q: "how are you", a: "I'm wonderful, thank you for asking! I'm always excited to engage in meaningful conversations. How are you feeling today? 💫" }
-  ],
-  queries: [
-    { q: "what can you do", a: "I'm here to be your intellectual companion and supportive friend. We can explore topics together, solve problems, or just have engaging conversations. What interests you most? 🌟" },
-    { q: "help me understand", a: "I'd love to help you understand this better. Let's break it down together and explore it step by step. Where would you like to start? 🎯" }
-  ]
-};
+let sentimentAnalyzer: any = null;
+async function getSentimentAnalyzer() {
+  if (!sentimentAnalyzer) {
+    const module = await import('sentiment');
+    sentimentAnalyzer = new (module as any).default();
+  }
+  return sentimentAnalyzer;
+}
 
-const analyzeTone = (message: string): string => {
-  const result = sentiment.analyze(message);
-  
+const analyzeTone = async (message: string): Promise<string> => {
+  const analyzer = await getSentimentAnalyzer();
+  const result = analyzer.analyze(message);
+
   if (result.score > 2) return 'enthusiastic';
   if (result.score > 0) return 'positive';
   if (result.score < -2) return 'concerned';
   if (result.score < 0) return 'thoughtful';
-  
   if (/\?{2,}|!{2,}/.test(message)) return 'curious';
   if (/\b(help|please|can you|how to)\b/i.test(message)) return 'supportive';
   if (/\b(wow|cool|awesome|amazing)\b/i.test(message)) return 'encouraging';
   if (/\b(hmm|interesting|curious)\b/i.test(message)) return 'analytical';
-  
   return 'balanced';
-};
-
-const matchTemplate = (message: string): string | null => {
-  const normalized = message.toLowerCase().trim();
-  
-  for (const category of Object.values(starterTemplates)) {
-    const match = category.find(t => {
-      const similarity = stringSimilarity.compareTwoStrings(normalized, t.q);
-      return similarity > 0.7 || normalized.includes(t.q);
-    });
-    if (match) return match.a;
-  }
-  
-  return null;
 };
 
 // Rate limiting on client side
@@ -82,7 +61,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isReflectiveMode, setIsReflectiveMode] = useState(false);
-  const knowledgeBase = useKnowledgeBase();
 
   const addBotMessage = (content: string) => {
     const botMessage: MessageType = {
@@ -97,7 +75,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleError = (error: unknown) => {
     console.error('Chat error:', error);
     
-    let errorMessage = "I seem to be having a moment. Could we try that again? 💫";
+    let errorMessage = "Emily's brain is recharging. Please try again in a few seconds. 🔄";
     
     if (error instanceof Error) {
       if (error.message.includes('429') || error.message.includes('rate limit')) {
@@ -123,7 +101,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     lastMessageTime = now;
 
-    const userTone = analyzeTone(content);
+    const userTone = await analyzeTone(content);
     const userMessage: MessageType = {
       id: Date.now().toString(),
       content,
@@ -136,49 +114,28 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsTyping(true);
 
     try {
-      // Check for template matches first
-      const templateMatch = matchTemplate(content);
-      if (templateMatch) {
-        setTimeout(() => {
-          addBotMessage(templateMatch);
-          setIsTyping(false);
-        }, 1000);
-        return;
-      }
+      // Format conversation history for Gemini
+      const formattedHistory = messages.slice(-6).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }));
 
-      // If no template match, send to Supabase Edge Function
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-      
-      // Validate required environment variables
-      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        throw new Error('Missing required environment variables');
-      }
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ 
-          message: content,
-          conversationHistory: messages.slice(-6) // Send last 6 messages for context
-        }),
+      console.log("Sending to Gemini:", {
+        currentMessage: content,
+        conversationHistory: formattedHistory
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `API error: ${response.status}`);
-      }
+      const reply = await sendToGemini(content, messages.slice(-6));
       
-      if (!data || !data.reply) {
-        throw new Error('Invalid response format');
-      }
+      console.log("Gemini reply received:", {
+        reply,
+        timestamp: new Date().toISOString()
+      });
 
-      addBotMessage(data.reply);
+      addBotMessage(reply);
 
     } catch (error) {
+      console.error("Gemini API error:", error);
       handleError(error);
     } finally {
       setIsTyping(false);
@@ -221,7 +178,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useChat = (): ChatContextType => {
+export const useChat = () => {
   const context = useContext(ChatContext);
   if (context === undefined) {
     throw new Error('useChat must be used within a ChatProvider');
