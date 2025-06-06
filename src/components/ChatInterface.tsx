@@ -127,7 +127,7 @@ const ChatInterface = () => {
               <div className="w-2 h-2 rounded-full bg-soft-teal animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
             <span>Emily is thinking with her heart...</span>
-          </div>
+          </motion.div>
         )}
         
         <div ref={messagesEndRef} />
