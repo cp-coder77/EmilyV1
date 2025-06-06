@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { MessageType } from '../context/ChatContext';
+import { Heart, Frown, Meh } from 'lucide-react';
 
 type ChatBubbleProps = {
   message: MessageType;
@@ -8,6 +9,21 @@ type ChatBubbleProps = {
 
 const ChatBubble = ({ message, onFollowUpClick }: ChatBubbleProps) => {
   const isBot = message.sender === 'bot';
+  
+  const getEmotionIcon = () => {
+    if (!message.emotion || message.emotion.score < 0.3) return null;
+    
+    switch (message.emotion.mood) {
+      case 'happy':
+        return <Heart size={14} className="text-bold-coral" />;
+      case 'frustrated':
+        return <Frown size={14} className="text-warm-gray" />;
+      case 'neutral':
+        return <Meh size={14} className="text-soft-teal" />;
+      default:
+        return null;
+    }
+  };
   
   return (
     <motion.div
@@ -40,8 +56,15 @@ const ChatBubble = ({ message, onFollowUpClick }: ChatBubbleProps) => {
           </div>
         )}
         
-        <div className={`text-xs mt-1 ${isBot ? 'text-midnight-navy/60 dark:text-vanilla-cream/60' : 'text-white/70 dark:text-vanilla-cream/60'}`}>
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div className={`text-xs mt-1 flex items-center justify-between ${isBot ? 'text-midnight-navy/60 dark:text-vanilla-cream/60' : 'text-white/70 dark:text-vanilla-cream/60'}`}>
+          <span>
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {!isBot && getEmotionIcon() && (
+            <div className="flex items-center gap-1" title={`Detected mood: ${message.emotion?.mood} (${Math.round((message.emotion?.score || 0) * 100)}%)`}>
+              {getEmotionIcon()}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

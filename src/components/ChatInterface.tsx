@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, RefreshCw, Brain, VenetianMask as Mask } from 'lucide-react';
+import { Send, RefreshCw, Brain, VenetianMask as Mask, Heart } from 'lucide-react';
 import { useChat } from '../context/ChatContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatBubble from './ChatBubble';
@@ -66,6 +66,10 @@ const ChatInterface = () => {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-bold-coral rounded-full animate-pulse-slow"></div>
             <h2 className="font-semibold">Chat with Emily</h2>
+            <div className="flex items-center gap-1 text-xs text-warm-gray bg-peach-blush/10 dark:bg-peach-blush/5 px-2 py-1 rounded-full">
+              <Heart size={12} className="text-bold-coral" />
+              <span>Emotion-aware</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -122,8 +126,8 @@ const ChatInterface = () => {
               <div className="w-2 h-2 rounded-full bg-soft-teal animate-bounce" style={{ animationDelay: '150ms' }}></div>
               <div className="w-2 h-2 rounded-full bg-soft-teal animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
-            <span>Emily is thinking...</span>
-          </motion.div>
+            <span>Emily is thinking with her heart...</span>
+          </div>
         )}
         
         <div ref={messagesEndRef} />

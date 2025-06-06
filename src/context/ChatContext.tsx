@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { sendToGemini } from '../services/chatEngine';
+import { analyzeEmotion, enhanceResponseWithEmotion, EmotionAnalysis } from '../services/emotionService';
 
 export type MessageType = {
   id: string;
@@ -8,6 +9,7 @@ export type MessageType = {
   timestamp: Date;
   followUpPrompts?: string[];
   tone?: string;
+  emotion?: EmotionAnalysis;
 };
 
 type ChatContextType = {
@@ -62,12 +64,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isTyping, setIsTyping] = useState(false);
   const [isReflectiveMode, setIsReflectiveMode] = useState(false);
 
-  const addBotMessage = (content: string) => {
+  const addBotMessage = (content: string, emotion?: EmotionAnalysis) => {
     const botMessage: MessageType = {
       id: Date.now().toString(),
       content,
       sender: 'bot',
       timestamp: new Date(),
+      emotion,
     };
     setMessages(prev => [...prev, botMessage]);
   };
@@ -102,40 +105,59 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastMessageTime = now;
 
     const userTone = await analyzeTone(content);
+    
+    // Step 1: Analyze emotion using VADER API
+    console.log('🎭 Starting emotion analysis...');
+    let emotionAnalysis: EmotionAnalysis;
+    
+    try {
+      emotionAnalysis = await analyzeEmotion(content);
+      console.log('✨ Emotion detected:', emotionAnalysis);
+    } catch (error) {
+      console.warn('⚠️ Emotion analysis failed, using neutral fallback:', error);
+      emotionAnalysis = { mood: 'neutral', score: 0 };
+    }
+
     const userMessage: MessageType = {
       id: Date.now().toString(),
       content,
       sender: 'user',
       timestamp: new Date(),
-      tone: userTone
+      tone: userTone,
+      emotion: emotionAnalysis
     };
     
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
     try {
-      // Format conversation history for Gemini
+      // Step 2: Get response from Gemini (as before)
       const formattedHistory = messages.slice(-6).map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }]
       }));
 
-      console.log("Sending to Gemini:", {
+      console.log("🤖 Sending to Gemini:", {
         currentMessage: content,
-        conversationHistory: formattedHistory
+        conversationHistory: formattedHistory,
+        detectedEmotion: emotionAnalysis
       });
 
-      const reply = await sendToGemini(content, messages.slice(-6));
+      const geminiReply = await sendToGemini(content, messages.slice(-6));
       
-      console.log("Gemini reply received:", {
-        reply,
-        timestamp: new Date().toISOString()
+      // Step 3: Enhance Gemini's response based on detected emotion
+      const enhancedReply = enhanceResponseWithEmotion(geminiReply, emotionAnalysis);
+      
+      console.log("💝 Enhanced reply:", {
+        original: geminiReply,
+        enhanced: enhancedReply,
+        emotion: emotionAnalysis
       });
 
-      addBotMessage(reply);
+      addBotMessage(enhancedReply, emotionAnalysis);
 
     } catch (error) {
-      console.error("Gemini API error:", error);
+      console.error("❌ Chat processing error:", error);
       handleError(error);
     } finally {
       setIsTyping(false);
