@@ -3,32 +3,77 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const HeroSection = () => {
+  // Animation variants for staggered text entrance
+  const textVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.3
+      }
+    }
+  };
+
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-b from-vanilla-cream to-vanilla-cream/50 dark:from-midnight-navy dark:to-midnight-navy/95">
       <div className="container-custom">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-10 md:mb-0">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+              <motion.h1 
+                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
+                variants={textVariants}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
                 Hi, I'm Emily — 
-                <span className="text-bold-coral"> your cozy, clever AI companion.</span>
-              </h1>
-              <p className="text-lg md:text-xl text-warm-gray dark:text-warm-gray/80 mb-8">
-                Let's learn, explore, and grow — together.
-              </p>
+                <motion.span 
+                  className="text-bold-coral"
+                  variants={textVariants}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+                >
+                  {" "}your cozy, clever AI companion.
+                </motion.span>
+              </motion.h1>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/chat" className="btn-primary flex items-center justify-center gap-2">
-                  Start Chatting <ArrowRight size={18} />
-                </Link>
-                <Link to="/about" className="btn-outline">
-                  Learn About Emily
-                </Link>
-              </div>
+              <motion.p 
+                className="text-lg md:text-xl text-warm-gray dark:text-warm-gray/80 mb-8"
+                variants={textVariants}
+                transition={{ duration: 1, ease: "easeOut", delay: 1.2 }}
+              >
+                Let's learn, explore, and grow — together.
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut", delay: 1.8 }}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Link to="/chat" className="btn-primary flex items-center justify-center gap-2">
+                    Start Chatting <ArrowRight size={18} />
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <Link to="/about" className="btn-outline">
+                    Learn About Emily
+                  </Link>
+                </motion.div>
+              </motion.div>
             </motion.div>
           </div>
           
@@ -36,38 +81,29 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="relative"
             >
               <div className="aspect-square max-w-md mx-auto bg-gradient-to-br from-peach-blush/20 to-soft-teal/20 rounded-full flex items-center justify-center p-8">
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-peach-blush to-soft-teal shadow-cozy-lg">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center">
-                      <motion.div
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center relative overflow-hidden">
+                      <motion.img
+                        src="/sigil.png"
+                        alt="Emily AI Sigil"
+                        className="w-20 h-20 md:w-24 md:h-24 object-contain"
                         animate={{ 
-                          scale: [1, 1.05, 1],
+                          scale: [1, 1.02, 1],
                         }}
                         transition={{
-                          duration: 3,
+                          duration: 4,
                           repeat: Infinity,
-                          repeatType: "reverse"
+                          ease: "easeInOut"
                         }}
-                      >
-                        <div className="relative text-center">
-                          <span className="text-white text-7xl opacity-90">E</span>
-                          <motion.div 
-                            className="absolute -top-1 -right-2 w-3 h-3 bg-bold-coral rounded-full"
-                            animate={{ 
-                              y: [0, -5, 0],
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              repeatType: "reverse"
-                            }}
-                          />
-                        </div>
-                      </motion.div>
+                        style={{
+                          filter: "drop-shadow(0 0 8px rgba(255, 90, 61, 0.3))"
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -82,7 +118,8 @@ const HeroSection = () => {
                 transition={{
                   duration: 4,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  repeatType: "reverse",
+                  ease: "easeInOut"
                 }}
               />
               <motion.div 
@@ -93,7 +130,8 @@ const HeroSection = () => {
                 transition={{
                   duration: 5,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  repeatType: "reverse",
+                  ease: "easeInOut"
                 }}
               />
               <motion.div 
@@ -104,7 +142,8 @@ const HeroSection = () => {
                 transition={{
                   duration: 3,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  repeatType: "reverse",
+                  ease: "easeInOut"
                 }}
               />
             </motion.div>
