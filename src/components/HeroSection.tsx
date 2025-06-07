@@ -38,7 +38,7 @@ const HeroSection = () => {
               animate="visible"
             >
               <motion.h1 
-                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
+                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
                 variants={textVariants}
                 transition={{ duration: 0.8 }}
               >
@@ -51,7 +51,7 @@ const HeroSection = () => {
               </motion.h1>
               
               <motion.p 
-                className="text-lg md:text-xl text-warm-gray dark:text-warm-gray/80 mb-8"
+                className="text-xl md:text-2xl text-warm-gray dark:text-warm-gray/80 mb-8"
                 variants={textVariants}
                 transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
               >
@@ -59,7 +59,7 @@ const HeroSection = () => {
               </motion.p>
               
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-4 items-center sm:items-start"
                 variants={buttonVariants}
               >
                 <motion.div
@@ -106,7 +106,7 @@ const HeroSection = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center">
                       <motion.div
-                        className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
+                        className="relative w-28 h-28 md:w-32 md:h-32 flex items-center justify-center"
                         animate={{ 
                           scale: [1, 1.02, 1],
                         }}
@@ -121,13 +121,13 @@ const HeroSection = () => {
                           alt="Emily AI Sigil"
                           className="w-full h-full object-contain"
                           style={{
-                            filter: "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))"
+                            filter: "brightness(0.85) contrast(1.2) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4))"
                           }}
                           animate={{
                             filter: [
-                              "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))",
-                              "drop-shadow(0 0 16px rgba(255, 255, 255, 0.5))",
-                              "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))"
+                              "brightness(0.85) contrast(1.2) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4))",
+                              "brightness(0.85) contrast(1.2) drop-shadow(0 0 20px rgba(255, 255, 255, 0.6))",
+                              "brightness(0.85) contrast(1.2) drop-shadow(0 0 16px rgba(255, 255, 255, 0.4))"
                             ]
                           }}
                           transition={{
