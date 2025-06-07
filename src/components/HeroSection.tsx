@@ -88,10 +88,9 @@ const HeroSection = () => {
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-peach-blush to-soft-teal shadow-cozy-lg">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center relative overflow-hidden">
-                      <motion.img
-                        src="/sigil.png"
-                        alt="Emily AI Sigil"
-                        className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                      {/* Enhanced sigil with better integration */}
+                      <motion.div
+                        className="relative"
                         animate={{ 
                           scale: [1, 1.02, 1],
                         }}
@@ -100,16 +99,42 @@ const HeroSection = () => {
                           repeat: Infinity,
                           ease: "easeInOut"
                         }}
-                        style={{
-                          filter: "drop-shadow(0 0 8px rgba(255, 90, 61, 0.3))"
-                        }}
-                      />
+                      >
+                        <motion.img
+                          src="/sigil-removebg-preview.png"
+                          alt="Emily AI Sigil"
+                          className="w-24 h-24 md:w-28 md:h-28 object-contain"
+                          style={{
+                            filter: "drop-shadow(0 0 12px rgba(255, 90, 61, 0.4)) drop-shadow(0 0 24px rgba(80, 178, 192, 0.2))",
+                            mixBlendMode: "normal"
+                          }}
+                        />
+                        {/* Additional glow layer for better integration */}
+                        <motion.div
+                          className="absolute inset-0 w-24 h-24 md:w-28 md:h-28 rounded-full"
+                          style={{
+                            background: "radial-gradient(circle, rgba(255, 90, 61, 0.1) 0%, rgba(80, 178, 192, 0.05) 50%, transparent 70%)",
+                          }}
+                          animate={{
+                            opacity: [0.3, 0.6, 0.3],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                      </motion.div>
                     </div>
                   </div>
+                  
+                  {/* Orb surface reflection effect */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/10 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 blur-sm pointer-events-none" />
                 </div>
               </div>
               
-              {/* Floating elements */}
+              {/* Floating elements with synchronized timing */}
               <motion.div 
                 className="absolute top-0 right-0 w-14 h-14 bg-peach-blush rounded-full opacity-40"
                 animate={{ 
