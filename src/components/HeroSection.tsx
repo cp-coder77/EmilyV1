@@ -88,9 +88,14 @@ const HeroSection = () => {
                 <div className="relative w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-peach-blush to-soft-teal shadow-cozy-lg">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center relative overflow-hidden">
-                      {/* Enhanced sigil with better integration */}
-                      <motion.div
-                        className="relative z-10"
+                      {/* Sigil with proper Framer Motion animation */}
+                      <motion.img
+                        src="/sigil-removebg-preview.png"
+                        alt="Emily AI Sigil"
+                        className="w-24 h-24 md:w-32 md:h-32 object-contain"
+                        style={{
+                          filter: "drop-shadow(0 0 12px rgba(255, 90, 61, 0.4)) drop-shadow(0 0 20px rgba(80, 178, 192, 0.3))",
+                        }}
                         animate={{ 
                           scale: [1, 1.02, 1],
                         }}
@@ -99,46 +104,40 @@ const HeroSection = () => {
                           repeat: Infinity,
                           ease: "easeInOut"
                         }}
+                        onError={(e) => {
+                          console.log('Sigil image failed to load');
+                          // Show fallback "E" if image fails
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      
+                      {/* Fallback "E" if sigil doesn't load */}
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center text-white text-5xl md:text-6xl opacity-90 font-bold"
+                        style={{ display: 'none' }}
                       >
-                        <motion.img
-                          src="/emily-sigil.png"
-                          alt="Emily AI Sigil"
-                          className="w-20 h-20 md:w-24 md:h-24 object-contain relative z-10"
-                          style={{
-                            filter: "drop-shadow(0 0 8px rgba(255, 90, 61, 0.3)) drop-shadow(0 0 16px rgba(80, 178, 192, 0.2))",
-                          }}
-                          onError={(e) => {
-                            console.log('Image failed to load, using fallback');
-                            // Fallback to original "E" if image fails
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.nextElementSibling;
-                            if (fallback) fallback.style.display = 'block';
-                          }}
-                        />
-                        {/* Fallback "E" if image doesn't load */}
-                        <div 
-                          className="absolute inset-0 flex items-center justify-center text-white text-4xl md:text-5xl opacity-90 font-bold"
-                          style={{ display: 'none' }}
-                        >
-                          E
-                        </div>
-                        
-                        {/* Additional glow layer for better integration */}
-                        <motion.div
-                          className="absolute inset-0 w-20 h-20 md:w-24 md:h-24 rounded-full pointer-events-none"
-                          style={{
-                            background: "radial-gradient(circle, rgba(255, 90, 61, 0.1) 0%, rgba(80, 178, 192, 0.05) 50%, transparent 70%)",
-                          }}
-                          animate={{
-                            opacity: [0.3, 0.6, 0.3],
-                          }}
-                          transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                        />
-                      </motion.div>
+                        E
+                      </div>
+                      
+                      {/* Additional glow layer synchronized with sigil pulse */}
+                      <motion.div
+                        className="absolute inset-0 w-24 h-24 md:w-32 md:h-32 rounded-full pointer-events-none"
+                        style={{
+                          background: "radial-gradient(circle, rgba(255, 90, 61, 0.15) 0%, rgba(80, 178, 192, 0.1) 50%, transparent 70%)",
+                        }}
+                        animate={{
+                          opacity: [0.4, 0.7, 0.4],
+                          scale: [1, 1.02, 1],
+                        }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
                       
                       {/* Floating dot animation */}
                       <motion.div 
