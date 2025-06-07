@@ -24,6 +24,10 @@ export default {
         'pulse-slow': 'pulse 3s cubic-bezier(0, 0, 0.2, 1) infinite',
         'bounce-slow': 'bounce 2s infinite',
       },
+      dropShadow: {
+        'glow': '0 0 8px rgba(255, 90, 61, 0.3)',
+        'glow-soft': '0 0 6px rgba(255, 90, 61, 0.2)',
+      }
     },
   },
   plugins: [],

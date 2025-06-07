@@ -3,32 +3,94 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const HeroSection = () => {
+  // Animation variants for orchestrated text flow
+  const textVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.3
+      }
+    }
+  };
+
+  const buttonVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.8, delay: 1.8 }
+    }
+  };
+
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-28 bg-gradient-to-b from-vanilla-cream to-vanilla-cream/50 dark:from-midnight-navy dark:to-midnight-navy/95">
       <div className="container-custom">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-10 md:mb-0">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+              <motion.h1 
+                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
+                variants={textVariants}
+                transition={{ duration: 0.8 }}
+              >
                 Hi, I'm Emily — 
-                <span className="text-bold-coral"> your cozy, clever AI companion.</span>
-              </h1>
-              <p className="text-lg md:text-xl text-warm-gray dark:text-warm-gray/80 mb-8">
-                Let's learn, explore, and grow — together.
-              </p>
+                <motion.span 
+                  className="text-bold-coral"
+                  variants={textVariants}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                > your cozy, clever AI companion.</motion.span>
+              </motion.h1>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/chat" className="btn-primary flex items-center justify-center gap-2">
-                  Start Chatting <ArrowRight size={18} />
-                </Link>
-                <Link to="/about" className="btn-outline">
-                  Learn About Emily
-                </Link>
-              </div>
+              <motion.p 
+                className="text-lg md:text-xl text-warm-gray dark:text-warm-gray/80 mb-8"
+                variants={textVariants}
+                transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+              >
+                Let's learn, explore, and grow — together.
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4"
+                variants={buttonVariants}
+              >
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.05,
+                    filter: "drop-shadow(0 0 8px rgba(255, 90, 61, 0.3))",
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
+                >
+                  <Link 
+                    to="/chat" 
+                    className="btn-primary flex items-center justify-center gap-2"
+                  >
+                    Start Chatting <ArrowRight size={18} />
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ 
+                    scale: 1.05,
+                    filter: "drop-shadow(0 0 6px rgba(255, 90, 61, 0.2))",
+                    transition: { duration: 0.3, ease: "easeOut" }
+                  }}
+                >
+                  <Link 
+                    to="/about" 
+                    className="btn-outline"
+                  >
+                    Learn About Emily
+                  </Link>
+                </motion.div>
+              </motion.div>
             </motion.div>
           </div>
           
@@ -36,7 +98,7 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               className="relative"
             >
               <div className="aspect-square max-w-md mx-auto bg-gradient-to-br from-peach-blush/20 to-soft-teal/20 rounded-full flex items-center justify-center p-8">
@@ -44,67 +106,89 @@ const HeroSection = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center">
                       <motion.div
+                        className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center"
                         animate={{ 
-                          scale: [1, 1.05, 1],
+                          scale: [1, 1.02, 1],
                         }}
                         transition={{
-                          duration: 3,
+                          duration: 4,
                           repeat: Infinity,
-                          repeatType: "reverse"
+                          ease: "easeInOut"
                         }}
                       >
-                        <div className="relative text-center">
-                          <span className="text-white text-7xl opacity-90">E</span>
-                          <motion.div 
-                            className="absolute -top-1 -right-2 w-3 h-3 bg-bold-coral rounded-full"
-                            animate={{ 
-                              y: [0, -5, 0],
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              repeatType: "reverse"
-                            }}
-                          />
-                        </div>
+                        <motion.img
+                          src="/emily-sigil.png"
+                          alt="Emily AI Sigil"
+                          className="w-full h-full object-contain"
+                          style={{
+                            filter: "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))"
+                          }}
+                          animate={{
+                            filter: [
+                              "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))",
+                              "drop-shadow(0 0 16px rgba(255, 255, 255, 0.5))",
+                              "drop-shadow(0 0 12px rgba(255, 255, 255, 0.3))"
+                            ]
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
+                        <motion.div 
+                          className="absolute -top-1 -right-2 w-3 h-3 bg-bold-coral rounded-full"
+                          animate={{ 
+                            y: [0, -5, 0],
+                            opacity: [0.8, 1, 0.8]
+                          }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        />
                       </motion.div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Floating elements */}
+              {/* Floating elements with gentler animations */}
               <motion.div 
                 className="absolute top-0 right-0 w-14 h-14 bg-peach-blush rounded-full opacity-40"
                 animate={{ 
-                  y: [0, -15, 0],
+                  y: [0, -12, 0],
+                  opacity: [0.4, 0.6, 0.4]
                 }}
                 transition={{
-                  duration: 4,
+                  duration: 5,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  ease: "easeInOut"
                 }}
               />
               <motion.div 
                 className="absolute bottom-10 left-0 w-10 h-10 bg-bold-coral rounded-full opacity-30"
                 animate={{ 
-                  y: [0, 15, 0],
+                  y: [0, 12, 0],
+                  opacity: [0.3, 0.5, 0.3]
                 }}
                 transition={{
-                  duration: 5,
+                  duration: 6,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  ease: "easeInOut"
                 }}
               />
               <motion.div 
                 className="absolute bottom-0 right-20 w-8 h-8 bg-soft-teal rounded-full opacity-40"
                 animate={{ 
-                  y: [0, 10, 0],
+                  y: [0, 8, 0],
+                  opacity: [0.4, 0.6, 0.4]
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 4,
                   repeat: Infinity,
-                  repeatType: "reverse"
+                  ease: "easeInOut"
                 }}
               />
             </motion.div>
