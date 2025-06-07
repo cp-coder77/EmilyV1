@@ -90,7 +90,7 @@ const HeroSection = () => {
                     <div className="bg-white/20 backdrop-blur-sm rounded-full w-3/4 h-3/4 flex items-center justify-center relative overflow-hidden">
                       {/* Enhanced sigil with better integration */}
                       <motion.div
-                        className="relative"
+                        className="relative z-10"
                         animate={{ 
                           scale: [1, 1.02, 1],
                         }}
@@ -101,17 +101,31 @@ const HeroSection = () => {
                         }}
                       >
                         <motion.img
-                          src="/sigil-removebg-preview.png"
+                          src="/emily-sigil.png"
                           alt="Emily AI Sigil"
-                          className="w-24 h-24 md:w-28 md:h-28 object-contain"
+                          className="w-20 h-20 md:w-24 md:h-24 object-contain relative z-10"
                           style={{
-                            filter: "drop-shadow(0 0 12px rgba(255, 90, 61, 0.4)) drop-shadow(0 0 24px rgba(80, 178, 192, 0.2))",
-                            mixBlendMode: "normal"
+                            filter: "drop-shadow(0 0 8px rgba(255, 90, 61, 0.3)) drop-shadow(0 0 16px rgba(80, 178, 192, 0.2))",
+                          }}
+                          onError={(e) => {
+                            console.log('Image failed to load, using fallback');
+                            // Fallback to original "E" if image fails
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling;
+                            if (fallback) fallback.style.display = 'block';
                           }}
                         />
+                        {/* Fallback "E" if image doesn't load */}
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center text-white text-4xl md:text-5xl opacity-90 font-bold"
+                          style={{ display: 'none' }}
+                        >
+                          E
+                        </div>
+                        
                         {/* Additional glow layer for better integration */}
                         <motion.div
-                          className="absolute inset-0 w-24 h-24 md:w-28 md:h-28 rounded-full"
+                          className="absolute inset-0 w-20 h-20 md:w-24 md:h-24 rounded-full pointer-events-none"
                           style={{
                             background: "radial-gradient(circle, rgba(255, 90, 61, 0.1) 0%, rgba(80, 178, 192, 0.05) 50%, transparent 70%)",
                           }}
@@ -125,6 +139,19 @@ const HeroSection = () => {
                           }}
                         />
                       </motion.div>
+                      
+                      {/* Floating dot animation */}
+                      <motion.div 
+                        className="absolute -top-1 -right-2 w-3 h-3 bg-bold-coral rounded-full"
+                        animate={{ 
+                          y: [0, -5, 0],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatType: "reverse"
+                        }}
+                      />
                     </div>
                   </div>
                   
