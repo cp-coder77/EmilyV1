@@ -42,12 +42,12 @@ const HeroSection = () => {
                 variants={textVariants}
                 transition={{ duration: 0.8 }}
               >
-                Hi, I'm Emily — 
+                Hi, I'm Emily —{' '}
                 <motion.span 
-                  className="text-bold-coral"
+                  className="text-bold-coral block"
                   variants={textVariants}
                   transition={{ duration: 0.8, delay: 0.3 }}
-                > your cozy, clever AI companion.</motion.span>
+                >your cozy, clever AI companion.</motion.span>
               </motion.h1>
               
               <motion.p 
@@ -59,7 +59,7 @@ const HeroSection = () => {
               </motion.p>
               
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4 items-center sm:items-start"
+                className="flex flex-col sm:flex-row gap-4 items-start"
                 variants={buttonVariants}
               >
                 <motion.div
